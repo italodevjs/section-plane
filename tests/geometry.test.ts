@@ -97,6 +97,15 @@ test("OBJ rejects concave and nonplanar polygons instead of wrong triangulation"
     /Non-planar/,
   );
 });
+test("OBJ rejects a self-crossing star even when consecutive turns share a sign", () => {
+  const vertices = Array.from(
+    { length: 5 },
+    (_, i) =>
+      `v ${Math.cos((i * 2 * Math.PI) / 5)} ${Math.sin((i * 2 * Math.PI) / 5)} 0`,
+  );
+  const star = vertices.join("\n") + "\nf 1 3 5 2 4";
+  assert.throws(() => parseMesh("star.obj", buffer(star)), /self-crossing/);
+});
 test("input rejects unsupported formats, missing vertices and nonfinite coordinates", () => {
   assert.throws(() => parseMesh("x.ply", buffer("x")), /not supported/);
   assert.throws(

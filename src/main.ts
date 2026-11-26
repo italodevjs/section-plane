@@ -122,15 +122,21 @@ function updateCut(): void {
   $<HTMLInputElement>("#slice").disabled = !enabled;
   $<HTMLSelectElement>("#axis").disabled = !enabled;
 }
-function inspect(name: string, data: ArrayBuffer, synthetic: boolean): void {
+function inspect(
+  name: string,
+  data: ArrayBuffer,
+  synthetic: boolean,
+  selection?: number,
+): void {
+  const id = selection ?? ++request;
+  if (id !== request) return;
   if (data.byteLength > MAX_BYTES) {
     $("#notice").textContent = "Choose a file no larger than 16 MiB.";
     return;
   }
   worker?.terminate();
   if (timer) clearTimeout(timer);
-  const id = ++request,
-    bytes = data.byteLength;
+  const bytes = data.byteLength;
   $("#busy").hidden = false;
   $("#notice").textContent = "";
   $("#export").setAttribute("disabled", "");
@@ -138,6 +144,7 @@ function inspect(name: string, data: ArrayBuffer, synthetic: boolean): void {
     type: "module",
   });
   const fail = (message: string) => {
+    if (id !== request) return;
     $("#busy").hidden = true;
     $("#notice").textContent = message;
     $("#export").toggleAttribute("disabled", !current);
@@ -205,16 +212,24 @@ function sample(key: keyof typeof samples): void {
 }
 $("#open").onclick = () => $<HTMLInputElement>("#file").click();
 const openFile = async (file: File): Promise<void> => {
+  const selection = ++request;
+  worker?.terminate();
+  if (timer) clearTimeout(timer);
+  $("#busy").hidden = true;
+  $("#export").toggleAttribute("disabled", !current);
   if (file.size > MAX_BYTES) {
     $("#notice").textContent = "Choose a file no larger than 16 MiB.";
     return;
   }
   try {
-    inspect(file.name, await file.arrayBuffer(), false);
+    const data = await file.arrayBuffer();
+    if (selection !== request) return;
+    inspect(file.name, data, false, selection);
     document
       .querySelectorAll("[data-sample]")
       .forEach((b) => b.classList.remove("active"));
   } catch {
+    if (selection !== request) return;
     $("#notice").textContent =
       "The file could not be read. Check that it is accessible and try again.";
   }
@@ -255,7 +270,14 @@ document.querySelectorAll<HTMLButtonElement>("[data-view]").forEach(
 $("#fit").onclick = () => viewer?.view("iso");
 $("#edges").onchange = () =>
   viewer?.edges($<HTMLInputElement>("#edges").checked);
-$("#cut").onchange = updateCut;
+$("#cut").onchange = () => {
+  if ($<HTMLInputElement>("#cut").checked) {
+    $("#measure").setAttribute("aria-pressed", "false");
+    $("#measure").textContent = "Measure distance";
+    viewer?.measure(false);
+  }
+  updateCut();
+};
 $("#axis").onchange = updateCut;
 $("#slice").oninput = updateCut;
 $("#units").onchange = updateReport;
@@ -265,6 +287,10 @@ $("#measure").onclick = () => {
   $("#measure").textContent = enabled
     ? "Measuring · pick two points"
     : "Measure distance";
+  if (enabled) {
+    $<HTMLInputElement>("#cut").checked = false;
+    updateCut();
+  }
   viewer?.measure(enabled);
 };
 $("#clear").onclick = () => viewer?.clearMeasurement();

@@ -188,13 +188,18 @@ function validateConvexFace(points: Vec3[]): void {
     )
       throw new Error("Non-planar OBJ polygon; triangulate it before import.");
     const a = points[j]!,
-      b = points[(j + 1) % points.length]!,
-      c = points[(j + 2) % points.length]!;
-    if (
-      dot(cross(sub(b, a), sub(c, b)), normal) <
-      -length * scale * scale * 1e-9
-    )
-      throw new Error("Concave OBJ polygon; triangulate it before import.");
+      b = points[(j + 1) % points.length]!;
+    // A simple convex polygon lies in the same half-plane of every edge.
+    // Checking only consecutive turns misses star polygons with crossings.
+    for (const p of points) {
+      if (
+        dot(cross(sub(b, a), sub(p, a)), normal) <
+        -length * scale * scale * 1e-9
+      )
+        throw new Error(
+          "Concave or self-crossing OBJ polygon; triangulate it before import.",
+        );
+    }
   }
 }
 export function pointAt(p: Float32Array, index: number): Vec3 {
