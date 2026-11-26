@@ -2,6 +2,10 @@
 
 A browser-local workbench for inspecting STL and OBJ surface meshes. Open a file, inspect its topology, move an orthographic section plane, measure between surface points, and export the computed report. No account, API key or database is required.
 
+![Actual mesh inspection and section controls](docs/screenshots/desktop.png)
+
+[Browser verification and screenshots](docs/VERIFICATION.md)
+
 The project explores a practical geometry question: **what can a triangle mesh tell us reliably, and where should a tool refuse to give an answer?** Volume is withheld when boundary, winding, non-manifold or degenerate-face checks fail. Passing these checks does not prove a surface is free of self-intersections.
 
 ## Run locally
