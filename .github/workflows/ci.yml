@@ -1,5 +1,5 @@
 name: Verify geometry and static build
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
@@ -14,3 +14,22 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - name: Upload verified static build
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish verified build
+        id: deployment
+        uses: actions/deploy-pages@v4
