@@ -1,5 +1,7 @@
 # Section Plane
 
+[Open the public demonstration](https://italodevjs.github.io/section-plane/) · [Verification record](docs/VERIFICATION.md)
+
 A browser-local workbench for inspecting STL and OBJ surface meshes. Open a file, inspect its topology, move an orthographic section plane, measure between surface points, and export the computed report. No account, API key or database is required.
 
 ![Actual mesh inspection and section controls](docs/screenshots/desktop.png)
